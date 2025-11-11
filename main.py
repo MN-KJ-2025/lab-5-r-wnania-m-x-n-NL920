@@ -24,7 +24,9 @@ def spare_matrix_Abt(m: int, n: int) -> tuple[np.ndarray, np.ndarray] | None:
             - Wektor b (m,).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    if type(m)!=int or type(n)!=int:
+    if not isinstance(m, int) or not isinstance(n, int):
+        return None
+    if m <= 0 or n <= 0:
         return None
     t=np.linspace(0,1,m)
     b=np.cos(4*t)
@@ -49,12 +51,32 @@ def square_from_rectan(
             - Wektor b_new (n,).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    if not isinstance(A, np.ndarray) or not isinstance(b, np.ndarray):
+    try:
+        # --- Walidacja typów ---
+        if not isinstance(A, np.ndarray) or not isinstance(b, np.ndarray):
+            return None
+        if A.ndim != 2 or b.ndim not in [1, 2]:
+            return None
+
+        # --- Dopasowanie wymiarów ---
+        m, n = A.shape
+        b = b.reshape(-1)  # konwertuj na wektor 1D
+        if b.shape[0] != m:
+            return None
+
+        # --- Obliczenia ---
+        A_new = A.T @ A
+        b_new = A.T @ b
+
+        # --- Walidacja wyniku ---
+        if not isinstance(A_new, np.ndarray) or not isinstance(b_new, np.ndarray):
+            return None
+
+        return (A_new, b_new)  # MUSI być krotka, nie lista ani macierz
+
+    except Exception:
         return None
-    A_new= A.T @ A
-    b_new=A.T @ b 
-    x=np.linalg.solve(A_new, b_new)
-    return A_new, b_new
+    
 
 
 def residual_norm(A: np.ndarray, x: np.ndarray, b: np.ndarray) -> float | None:
@@ -70,8 +92,16 @@ def residual_norm(A: np.ndarray, x: np.ndarray, b: np.ndarray) -> float | None:
         (float): Wartość normy residuum dla podanych parametrów.
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    #if not isinstance(A, np.ndarray) or not isinstance(b, np.ndarray) or not isinstance(x,np.ndarray):
-        #return None - sprawdź to 
+    try:
+        if not isinstance(A, np.ndarray) or not isinstance(x, np.ndarray) or not isinstance(b, np.ndarray):
+            return None
+        if A.ndim != 2 or x.ndim != 1 or b.ndim != 1:
+            return None
+        m, n = A.shape
+        if len(x) != n or len(b) != m:
+            return None
+        return np.linalg.norm(A @ x - b)
+    except Exception:
+        return None
     return np.linalg.norm(A @ x - b)
-#2 do zastanowienia się nad normami
-#2 zmien zapis czasu i pamieci na taki jak ze wzorca
+
